@@ -1,5 +1,6 @@
 import csv
 
+import torch
 from transformers import AutoModel, AutoTokenizer
 
 
@@ -27,16 +28,23 @@ def context_vectors(responses_name, model_name):
         )    
         input_ids = encoded_input['input_ids']
         output = model(input_ids)
+        
+        # cls token
         #context_vectors.append(output.last_hidden_state[0, 0, :].tolist())
-        context_vectors.append(output.pooler_output.detach().squeeze().numpy().tolist())
-    
+        
+        # pooler output
+        #context_vectors.append(output.pooler_output.detach().squeeze().numpy().tolist())
+        
+        # averaged last hidden states over tokens
+        context_vectors.append(torch.mean(output.last_hidden_state, dim=1).squeeze().tolist())
+        
     # save vectors as CSV
     model_name = model_name.replace('/', '-')
-    with open(f"dataset/{responses_name}.{model_name}_POOLED", "w", newline="") as file:
+    with open(f"dataset/{responses_name}.{model_name}", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerows(context_vectors)
 
 # driver    
 for responses in ['10-prompts_human-GPT-Bard', '10-prompts_human-temps']:
-    for model_name in ['bert-base-uncased', 'roberta-base']: #, 'facebook/opt-350m']:
+    for model_name in ['facebook/opt-350m']: # ['bert-base-uncased', 'roberta-base', 'facebook/opt-350m']:
         context_vectors(responses, model_name)
