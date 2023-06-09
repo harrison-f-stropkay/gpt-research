@@ -3,3 +3,4 @@
 dataset_reddit
 __pycache__
 test.py
+api_key.txt
